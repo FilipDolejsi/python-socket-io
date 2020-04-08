@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, emit, send
 from flask_cors import CORS
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'justasecretkeythatishouldputhere'
+# app.config['SECRET_KEY'] = 'justasecretkeythatishouldputhere'
 
 socketio = SocketIO(app)
 CORS(app)
@@ -18,7 +18,7 @@ def index():
 def start_stop_action():
     action = request.get_json()
     print(
-        f"\Message: {action['Action']} {' '.join([p['Name'] for p in action['Params']])}")
+        f"Message: {action['Action']} {' '.join([p['Name'] for p in action['Params']])}")
     socketio.emit('action',action, broadcast = True)
     return "Ok"
 
