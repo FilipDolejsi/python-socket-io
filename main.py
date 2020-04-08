@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit, send
 from flask_cors import CORS
+import json
 
 app = Flask(__name__)
 # app.config['SECRET_KEY'] = 'justasecretkeythatishouldputhere'
@@ -16,10 +17,15 @@ def index():
 
 @app.route("/startstop", methods=['POST'])
 def start_stop_action():
-    action = request.get_json()
-    print(
-        f"Message: {action['Action']} {' '.join([p['Name'] for p in action['Params']])}")
-    socketio.emit('action',action, broadcast = True)
+    message = request.get_json()
+
+    if "Action" in message:
+        socketio.emit('action', message, broadcast=True)
+        print(f"Message: {message['Action']} {' '.join([p['Name'] for p in message['Params']])}")
+
+    if "Atomics" in message:
+        socketio.emit('atomics', message["Atomics"], broadcast=True)
+        print("Sent: " + json.dumps(message["Atomics"], indent=2))
     return "Ok"
 
 
@@ -36,8 +42,13 @@ def on_connect():
     emit('log', payload, broadcast=True)
 
 @socketio.on('completed_action')
-def handleMessage(payload):
-    print('You have: ' + str(payload))
+def on_action_completed(payload):
+    print('Action completed: ' + str(payload))
+    send(payload, broadcast=True)
+
+@socketio.on('state_update')
+def on_state_update(payload):
+    print('State update: ' + str(payload))
     send(payload, broadcast=True)
 
 

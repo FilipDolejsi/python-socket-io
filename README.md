@@ -7,7 +7,7 @@ This code requires Python 3.7 and younger.
 Before you start, you may want to setup the virtual environment for Python dependencies.
 
 > Setting up Virtual environment:
->
+> 0. `pip install virtualenv`
 > 1. `python -m virtualenv venv`
 > 2. execute `venv\Scripts\activate.bat` on windows or `venv/Scripts/activate` elsewhere
 
