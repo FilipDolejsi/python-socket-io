@@ -7,9 +7,10 @@ This code requires Python 3.7 and younger.
 Before you start, you may want to setup the virtual environment for Python dependencies.
 
 > Setting up Virtual environment:
-> 0. `pip install virtualenv`
-> 1. `python -m virtualenv venv`
-> 2. execute `venv\Scripts\activate.bat` on windows or `venv/Scripts/activate` elsewhere
+>
+> 1. `pip install virtualenv`
+> 2. `python -m virtualenv venv`
+> 3. execute `venv\Scripts\activate.bat` on windows or `venv/Scripts/activate` elsewhere
 
 Install pre-requisites.
 
@@ -22,6 +23,8 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+
+If using Visual Studio Code, just start the debugger. The `launch.json` contains configuration that starts the Python service and then opens the page in Chrome and attaches to the javascript debugger there.
 
 ## Initialize the page with observed data
 
@@ -46,10 +49,16 @@ Post this kind of message to `http://localhost:5000/startstop`:
 
 ```json
 {
-    "Action": "Pump_you_moron",
+    "Action": "run_checklist",
     "Params": [{ "Name": "Quickly"}],
     "IsStopped": false,
 }
 ```
+
+The template `index.html` includes cards for action named `run_checklist`
+and `stay_safe`, but if you post any other action name, a dummy card is
+created on the fly.
+
+Post `"IsStopped": true` to complete the action without waiting for the user.
 
 The page should display cards with buttons to end the process.
