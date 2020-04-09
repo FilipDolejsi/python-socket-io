@@ -1,151 +1,273 @@
 <!DOCTYPE html>
 <html>
-    <head>
-      <meta charset="utf-8">
-      <title>
-        Cellar simulator
-      </title>
 
-      <style>
-        .demo-card-event.mdl-card {
-          width: 256px;
-          height: 256px;
-          background: #3E4EB8;
-        }
-        .demo-card-event > .mdl-card__actions {
-          border-color: rgba(255, 255, 255, 0.2);
-        }
-        .demo-card-event > .mdl-card__title {
-          align-items: flex-start;
-        }
-        .demo-card-event > .mdl-card__title > h4 {
-          margin-top: 0;
-        }
-        .demo-card-event > .mdl-card__actions {
-          display: flex;
-          box-sizing:border-box;
-          align-items: center;
-        }
-        .demo-card-event > .mdl-card__actions > .material-icons {
-          padding-right: 10px;
-        }
-        .demo-card-event > .mdl-card__title,
-        .demo-card-event > .mdl-card__actions,
-        .demo-card-event > .mdl-card__actions > .mdl-button {
-          color: #fff;
-        }
-        </style>
-        
+<head>
+  <meta charset="utf-8">
+  <title>
+    Cellar simulator
+  </title>
 
-      <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script> -->
-      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-      <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
-      <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.js"></script>
+  <style>
+    .simulator-action-card.mdl-card {
+      width: 256px;
+      height: 256px;
+      background: #3E4EB8;
+    }
 
-      <script type="text/javascript">
+    .simulator-action-card>.mdl-card__actions {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
 
-        function init() {
-          const socket = io()
-          const loggerElement = document.getElementById('logger')
-          const actionsElement = document.getElementsByTagName("actions")[0]
-  
-          socket.on('log', function(payload) {
-            console.log(payload);
-            const dataElement = document.createElement('pre')
-            dataElement.innerHTML = payload.data
-            loggerElement.appendChild(dataElement)
-          })
+    .simulator-action-card>.mdl-card__title {
+      align-items: flex-start;
+    }
 
-          socket.on('atomics', function(payload){
-              const newSliderValue = payload.water_level;
-              const newToggleValue = payload.water_is_rising;
+    .simulator-action-card>.mdl-card__title>h4 {
+      margin-top: 0;
+    }
 
-              const toggleSwitch = document.getElementById("water_is_rising");
-              const slider = document.getElementById("water_level");
+    .simulator-action-card>.mdl-card__actions {
+      display: flex;
+      box-sizing: border-box;
+      align-items: center;
+    }
 
-              if(newToggleValue){
-                toggleSwitch.parentElement.MaterialSwitch.on();
-              }
-              else{
-                toggleSwitch.parentElement.MaterialSwitch.off();
-              }
-              slider.value = newSliderValue;
-          })
-  
-          socket.on('action', function(payload) {
-            console.log(payload);
-            const actionCard = document.createElement('div');
-            actionCard.id = payload['Action'];
-            actionCard.className = "demo-card-event mdl-card mdl-shadow--2dp  mdl-cell mdl-cell--4-col";
-            actionCard.innerHTML = `<div class="mdl-card__title mdl-card--expand">
+    .simulator-action-card>.mdl-card__actions>.material-icons {
+      padding-right: 10px;
+    }
+
+    .simulator-action-card>.mdl-card__title,
+    .simulator-action-card>.mdl-card__actions,
+    .simulator-action-card>.mdl-card__actions>.mdl-button {
+      color: #fff;
+    }
+
+    .simulator-status-control {
+      width: 300px;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.js"></script>
+
+  <script type="text/javascript">
+
+    function showAction(activeActionsHost, actionCatalog, actionName, socket) {
+      let actionCard = document.getElementById('action_' + actionName);
+      if (actionCard) {
+        // remove card from the catalog
+        actionCard.parentElement.removeChild(actionCard);
+      }
+      else {
+        actionCard = document.createElement('div');
+        actionCard.id = 'action_' + actionName;
+        actionCard.className = "simulator-action-card mdl-card mdl-shadow--2dp  mdl-cell mdl-cell--4-col";
+        actionCard.innerHTML = `<div class="mdl-card__title mdl-card--expand" style="background: url('https://d6bycdqursbhf.cloudfront.net/uploads/blog_post/image/409/dd1b23ee4ceccf526c2774cfd2caef12ea184212_e9fcbfeedfacc051206e376fa86772c13f7cfc8e_Galapagos-Islands-North-Seymour-0059_small.jpg')">
               <h4>
                 Steps:
                 <ul>
-                  <li>Do this...</li>
-                  <li>Do that...</li>
+                  <li>Deep breath</li>
+                  <li>Dive</li>
+                  <li>And again...</li>
                 </ul>
               </h4>
             </div>
             <div class="mdl-card__actions mdl-card--border">
               <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                ${payload["Action"]}
+                ${actionName}
               </a>
               <div class="mdl-layout-spacer"></div>
-              <i class="material-icons">event</i>
-            </div>`
-            actionsElement.appendChild(actionCard)
-            actionCard.onclick = function () {
-              socket.emit('completed_action', payload["Action"]);
-              actionsElement.removeChild(actionCard);
-            }
-          })
+              <i class="material-icons">waves</i>
+            </div>`;
+        activeActionsHost.appendChild(actionCard)
+      }
 
-          document.getElementById('water_level').onchange = function(event) {
-            const slider = document.getElementById('water_level');
-            const payload = {}
-            payload["water_level"] = slider.value;
-            socket.emit('state_update', payload);
-          }
+      actionCard.onclick = function () {
+        socket.emit('completed_action', actionName);
+        hideAction(activeActionsHost, actionCatalog, actionCard);
+      }
 
-          document.getElementById('water_is_rising').onchange = function(event) {
-            const toggleSwitch = document.getElementById("water_is_rising");
-            const payload = {};
-            payload["water_is_rising"] = toggleSwitch.checked;
-            socket.emit('state_update', payload);
+      // add card to the heads-up action grid
+      activeActionsHost.appendChild(actionCard);
+    }
+
+    function hideAction(activeActionsHost, actionCatalog, actionCard) {
+      activeActionsHost.removeChild(actionCard);
+      actionCatalog.appendChild(actionCard);
+    }
+
+    function updateAtomic(atomicName, atomicValue) {
+      const inputElement = document.getElementById('atomic_' + atomicName);
+
+      switch (typeof (atomicValue)) {
+        case "boolean":
+          if (atomicValue) {
+            inputElement.parentElement.MaterialSwitch.on();
           }
+          else {
+            inputElement.parentElement.MaterialSwitch.off();
+          }
+          break;
+        case "number":
+          inputElement.value = atomicValue;
+          break;
+        default:
+          console.warn(`Atomic '${atomicName}' value '${atomicValue}' type ${typeof (atomicValue)} is not supported.`);
+      }
+    }
+
+    var socket = undefined;
+
+    function init() {
+      socket = io()
+      const activeActionsHost = document.getElementsByTagName("actions")[0];
+      const actionCatalog = document.getElementById('catalog');
+      const notification = document.querySelector('.mdl-js-snackbar');
+
+      socket.on('connect', () => notification.MaterialSnackbar.showSnackbar({ message: socket.connected ? 'Connected!' : socket.disconnected ? 'Disconnected : (' : 'Connection status changed.' }));
+      socket.on('connect_error', () => notification.MaterialSnackbar.showSnackbar({ message: 'Connection error.' }));
+
+      socket.on('log', function (payload) {
+        console.log(payload);
+
+        notification.MaterialSnackbar.showSnackbar({
+          message: payload.data
+        });
+      })
+
+      socket.on('atomics', function (payload) {
+        notification.MaterialSnackbar.showSnackbar({
+          message: `Value of ${Object.keys(payload).join(', ')} updated.`
+        });
+
+        [...Object.keys(payload)].forEach(atomicName => updateAtomic(atomicName, payload[atomicName]));
+      })
+
+      socket.on('action', function (payload) {
+        console.log(payload);
+        const actionName = payload['Action'];
+        const actionExecuting = !payload['IsStopped'];
+
+        notification.MaterialSnackbar.showSnackbar({
+          message: `Action '${actionName}' ${payload.Params && payload.Params.map(p => 'Name').join(', ') || ''} ${actionExecuting ? 'started' : 'completed'}.`
+        });
+
+        if (actionExecuting) {
+          showAction(activeActionsHost, actionCatalog, actionName, socket);
         }
-  
-          </script>
-  
-    </head>
-    <body onload="init()">
-      <div id="logger"></div>
-      
-        <h1>Cellar simulator</h1>
-        <h2>State</h2>
+        else {
+          const actionCard = document.getElementById('action_' + actionName);
+          hideAction(activeActionsHost, actionCatalog, actionCard);
+        }
+      })
+    }
 
-        <state>
-          <!-- Slider with Starting Value -->
-          Water level <input id = "water_level" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="0" tabindex="0">  
-          <!-- toggle switch, switched on--> 
-          <label id="water_is_rising_label" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="water_is_rising">
-            <input type="checkbox" id="water_is_rising" class="mdl-switch__input">
-            <span class="mdl-switch__label">Water is rising</span>
-          </label>
-        </state>
+    function onAtomicValueUpdated(atomicElement) {
+      const atomicName = atomicElement.getAttribute('atomicName');
+      let newAtomicValue = undefined;
 
-        <h2>Actions</h2>
-        <!-- <div class="mdl-grid">
-          <div class="mdl-cell mdl-cell--4-col">4</div>
-          <div class="mdl-cell mdl-cell--4-col">4</div>
-          <div class="mdl-cell mdl-cell--4-col">4</div>
-        </div> -->
-        <actions class="mdl-grid">
-          <!-- <div class="mdl-cell mdl-cell--4-col demo-card-event mdl-card mdl-shadow--2dp">
+      switch (atomicElement.type) {
+        case 'range':
+          newAtomicValue = atomicElement.value;
+          break;
+        case "checkbox":
+          newAtomicValue = atomicElement.checked;
+          break;
+        default:
+          console.warn(`Atomic '${atomicName}' input type '${atomicElement.type}' is not supported.`);
+      }
+
+      const payload = {};
+      payload[atomicName] = newAtomicValue;
+      socket.emit('state_update', payload);
+    }
+
+  </script>
+
+</head>
+
+<body onload="init()">
+  <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-layout--fixed-tabs">
+    <header class="mdl-layout__header mdl-layout__header--scroll">
+      <div class="mdl-layout__header-row">
+        <!-- Title -->
+        <span class="mdl-layout-title">Cellar simulator</span>
+      </div>
+      <!-- Tabs -->
+      <div class="mdl-layout__tab-bar mdl-js-ripple-effect">
+        <a href="#fixed-tab-1" class="mdl-layout__tab is-active"><span class="mdl-badge" data-badge="1">
+            <i class="material-icons" style="vertical-align: text-bottom">input</i>
+            Heads-up</span></a>
+        <a href="#fixed-tab-2" class="mdl-layout__tab">
+          <i class="material-icons" style="vertical-align: text-bottom">school</i>
+          Catalog
+        </a>
+      </div>
+    </header>
+    <main class="mdl-layout__content">
+      <section class="mdl-layout__tab-panel is-active" id="fixed-tab-1">
+        <div class="page-content" style="padding: 10px">
+          <h4>State</h4>
+
+          <state>
+            <ul class="simulator-status-control mdl-list">
+              <li class="mdl-list__item">
+                <span class="mdl-list__item-primary-content">Water level</span>
+                <span class="mdl-list__item-secondary-action">
+                  <!-- Slider with Starting Value -->
+                  <input id="atomic_water_level" class="mdl-slider mdl-js-slider" type="range" min="0" max="100"
+                    value="0" tabindex="0" atomicName="water_level" onchange="onAtomicValueUpdated(this)">
+                </span>
+              </li>
+              <li class="mdl-list__item">
+                <span class="mdl-list__item-primary-content">Water is rising</span>
+                <span class="mdl-list__item-secondary-action">
+                  <!-- toggle switch, switched on-->
+                  <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="atomic_water_is_rising">
+                    <input type="checkbox" id="atomic_water_is_rising" atomicName="water_is_rising"
+                      class="mdl-switch__input" tabindex="1" onchange="onAtomicValueUpdated(this)">
+                    <span class="mdl-switch__label"></span>
+                  </label>
+                </span>
+              </li>
+            </ul>
+          </state>
+
+          <h4>Actions</h4>
+          <actions class="mdl-grid">
+          </actions>
+        </div>
+      </section>
+      <section class="mdl-layout__tab-panel" id="fixed-tab-2">
+        <!-- see other icons: https://material.io/resources/icons/?style=baseline -->
+
+        <div id="catalog" class="page-content mdl-grid">
+          <div id="action_run_checklist"
+            class="mdl-cell mdl-cell--4-col simulator-action-card mdl-card mdl-shadow--2dp">
             <div class="mdl-card__title mdl-card--expand">
               <h4>
                 Steps:
+                <ol>
+                  <li>Do this...</li>
+                  <li>Do that...</li>
+                </ol>
+              </h4>
+            </div>
+            <div class="mdl-card__actions mdl-card--border">
+              <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                <i class="material-icons">done</i> Done!
+              </a>
+              <div class="mdl-layout-spacer"></div>
+              <i class="material-icons">assignment</i>
+            </div>
+          </div>
+          <div id="action_stay_safe" class="mdl-cell mdl-cell--4-col simulator-action-card mdl-card mdl-shadow--2dp">
+            <div class="mdl-card__title mdl-card--expand"
+              style="background: url('https://images.everydayhealth.com/images/coronavirus/coronavirus-checklist-722x406.jpg?w=1110') center/cover">
+              <h4>
+                Steps:
                 <ul>
                   <li>Do this...</li>
                   <li>Do that...</li>
@@ -154,32 +276,21 @@
             </div>
             <div class="mdl-card__actions mdl-card--border">
               <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                Done!
+                Stay safe!
               </a>
               <div class="mdl-layout-spacer"></div>
               <i class="material-icons">event</i>
             </div>
           </div>
-          <div class="mdl-cell mdl-cell--4-col demo-card-event mdl-card mdl-shadow--2dp">
-            <div class="mdl-card__title mdl-card--expand">
-              <h4>
-                Steps:
-                <ul>
-                  <li>Do this...</li>
-                  <li>Do that...</li>
-                </ul>
-              </h4>
-            </div>
-            <div class="mdl-card__actions mdl-card--border">
-              <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                Done!
-              </a>
-              <div class="mdl-layout-spacer"></div>
-              <i class="material-icons">event</i>
-            </div>
-          </div> -->
-        </actions>
-    </body>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div aria-live="assertive" aria-atomic="true" aria-relevant="text" class="mdl-snackbar mdl-js-snackbar">
+    <div class="mdl-snackbar__text"></div>
+    <button type="button" class="mdl-snackbar__action"></button>
+  </div>
+</body>
+
 </html>
-
-
